@@ -181,6 +181,74 @@ paths:
           description: rate updated
         "400":
           description: movie ID not found
+  /help:
+    get:
+      tags:
+        - developers
+      summary: get all the endpoints
+      description: |
+        Return all the endpoints of the movies API
+      operationId: help
+      responses:
+        "200":
+          description: all endpoint
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllMovies'
+  /movies/rating:
+    get:
+      tags:
+        - developers
+      summary: get the movies over the rate
+      description: |
+        Return the movies over the minimal rating in parameters
+      operationId: get_movies_byminimalrate
+      parameters:
+        - name: min_rating
+          in: query
+          description: minimal rate
+          required: true
+          style: form
+          explode: true
+          schema:
+            type: int
+      responses:
+        "200":
+          description: list of endpoints if there are over the rate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllMovies'
+        "400":
+          description: rate invalid
+  /movies/director:
+    get:
+      tags:
+        - developers
+      summary: Get movies by director
+      description: |
+        Return the list of movies directed by the specified director.
+      operationId: get_movies_bydirector
+      parameters:
+        - name: director
+          in: query
+          description: Name of the director
+          required: true
+          style: form
+          explode: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of movies by the specified director
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllMovies'
+        "400":
+          description: Invalid director parameter
+
 components:
   schemas:
     AllMovies:
