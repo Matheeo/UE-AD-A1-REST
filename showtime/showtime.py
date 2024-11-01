@@ -7,12 +7,12 @@ app = Flask(__name__)
 PORT = 3202
 HOST = '0.0.0.0'
 
-# Load the times from the json file
+# Load the schedule from the json file
 def load_schedule():
    with open('{}/databases/times.json'.format("."), 'r') as jsf:
       return json.load(jsf)["schedule"]
 
-# Save the times to the json file
+# Save the schedule to the json file
 def save_schedule(schedule_list):
    with open('{}/databases/times.json'.format("."), 'w') as jsf:
       json.dump({"schedule": schedule_list}, jsf, indent=4)
