@@ -8,8 +8,21 @@ app = Flask(__name__)
 PORT = 3203
 HOST = '0.0.0.0'
 
-with open('{}/databases/users.json'.format("."), "r") as jsf:
-   users = json.load(jsf)["users"]
+booking_port = 3201
+movie_port =
+showtime_port =
+
+# Load the users from the json file
+def load_users():
+   with open('{}/databases/users.json'.format("."), 'r') as jsf:
+      return json.load(jsf)["users"]
+
+# Save the users to the json file
+def save_users(users_list):
+   with open('{}/databases/users.json'.format("."), 'w') as jsf:
+      json.dump({"movies": users_list}, jsf, indent=4)
+
+users = load_users()
 
 @app.route("/", methods=['GET'])
 def home():

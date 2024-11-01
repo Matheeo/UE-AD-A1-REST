@@ -1,0 +1,76 @@
+openapi: 3.0.0
+info:
+  title: User Service API
+  version: 1.0.0
+  description: API pour le service utilisateur interagissant avec les services Booking et Movie pour récupérer les réservations et les informations de films liées aux utilisateurs.
+
+servers:
+  - url: http://localhost:3203
+    description: Local server for User Service
+
+paths:
+  /users/{user_id}/movies/watched-count:
+    get:
+      tags:
+        - developer
+      summary: Get count of movies watched by a user before today's date
+      description: |
+        Retrieve the count of movies a user has watched before today's date. 
+        This endpoint interacts with the Booking service to get past bookings for the user.
+      parameters:
+        - name: user_id
+          in: path
+          description: ID of the user
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response with the count of movies
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  watched_count:
+                    type: integer
+                    description: Number of movies watched by the user before today
+                    example: 5
+        "404":
+          description: User or past bookings not found
+        "400":
+          description: Invalid user ID format
+
+  /users/{user_id}/movies/titles:
+    get:
+      tags:
+        - developer
+      summary: Get titles of all movies in a user's bookings
+      description: |
+        Retrieve the list of movie titles for all bookings made by a user.
+        This endpoint interacts with both the Booking and Movie services to retrieve the titles.
+      parameters:
+        - name: user_id
+          in: path
+          description: ID of the user
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response with the list of movie titles
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  titles:
+                    type: array
+                    items:
+                      type: string
+                      description: Title of a booked movie
+                    example: ["The Martian", "Inception", "Avatar"]
+        "404":
+          description: User or movies not found for bookings
+        "400":
+          description: Invalid user ID format
