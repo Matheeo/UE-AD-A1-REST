@@ -9,7 +9,7 @@ servers:
     description: Local server for User Service
 
 paths:
-  /users/{user_id}/movies/watched-count:
+  /users/{userid}/movies/watched-count:
     get:
       tags:
         - developer
@@ -17,8 +17,9 @@ paths:
       description: |
         Retrieve the count of movies a user has watched before today's date. 
         This endpoint interacts with the Booking service to get past bookings for the user.
+      operationId: get_user_watchedcount
       parameters:
-        - name: user_id
+        - name: userid
           in: path
           description: ID of the user
           required: true
@@ -37,11 +38,9 @@ paths:
                     description: Number of movies watched by the user before today
                     example: 5
         "404":
-          description: User or past bookings not found
-        "400":
-          description: Invalid user ID format
+          description: User not found
 
-  /users/{user_id}/movies/titles:
+  /users/{userid}/movies/titles:
     get:
       tags:
         - developer
@@ -49,8 +48,9 @@ paths:
       description: |
         Retrieve the list of movie titles for all bookings made by a user.
         This endpoint interacts with both the Booking and Movie services to retrieve the titles.
+      operationId: get_booked_movie_titles
       parameters:
-        - name: user_id
+        - name: userid
           in: path
           description: ID of the user
           required: true
@@ -72,5 +72,3 @@ paths:
                     example: ["The Martian", "Inception", "Avatar"]
         "404":
           description: User or movies not found for bookings
-        "400":
-          description: Invalid user ID format
