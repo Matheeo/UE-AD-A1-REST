@@ -71,7 +71,7 @@ def create_movie(movieid):
     else:
         movies.append(request.get_json()) # add the movie to the list
         save_movies(movies) # save the movies to the json file
-        return make_response("Movie created", 200)
+        return make_response(request.get_json(), 200)
 
 # delete a movie
 @app.route("/movies/<string:movieid>", methods=["DELETE"])
