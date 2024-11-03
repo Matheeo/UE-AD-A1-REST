@@ -40,7 +40,7 @@ def get_booking_for_user(userid):
 
       # if the userid is the same as the one in the url
       if booking["userid"] == userid:
-         make_response(booking, 200)
+         return make_response(booking, 200)
 
    return make_response("Bad input parameter", 400)
 
