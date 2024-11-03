@@ -8,6 +8,8 @@ app = Flask(__name__)
 PORT = 3201
 HOST = '0.0.0.0'
 
+showtime_ws = "http://localhost:3202"
+
 # Load the bookings from the json file
 def load_bookings():
    with open('{}/databases/bookings.json'.format("."), 'r') as jsf:
@@ -17,6 +19,24 @@ def load_bookings():
 def save_bookings(bookings_list):
    with open('{}/databases/bookings.json'.format("."), 'w') as jsf:
       json.dump({"bookings": bookings}, jsf, indent=4)
+
+# check if the movie is available a the good date in showtime
+def movie_available(date, movieid):
+
+   # get movies at the date in param
+   response = requests.get(showtime_ws + "/showmovies/" + date)
+
+   # if request is good and movies list exist in
+   if response.status_code == 200 and response.json()["movies"]:
+
+      # iterate over all the movies
+      for movie in response.json()["movies"]:
+
+         # if the movieid is in the movies liest of the date
+         if movie == movieid:
+            return True
+
+   return False
 
 # Load the movies
 bookings = load_bookings()
@@ -85,15 +105,23 @@ def add_booking_byuser(userid):
 
                   # if the movie id is not in the date we add the movieid
                   if not movie_exist_in_date:
-                     date["movies"].append(request.get_json()["movieid"])
+
+                     # chech if the movie is available
+                     if movie_available(request.get_json()["date"], request.get_json()["movieid"]):
+                        date["movies"].append(request.get_json()["movieid"])
+
                      save_bookings(bookings)
-                     return make_response(bookings, 200)
+                     return make_response(next((booking for booking in bookings if booking["userid"] == userid), jsonify({"error": "userid not found"})), 200)
 
             # if the date does not exist
             if not date_exist:
-               user_bookings["dates"].append({"date": request.get_json()["date"], "movies": [request.get_json()["movieid"]]})
+
+               # chech if the movie is available
+               if movie_available(request.get_json()["date"], request.get_json()["movieid"]):
+                  user_bookings["dates"].append({"date": request.get_json()["date"], "movies": [request.get_json()["movieid"]]})
+
                save_bookings(bookings)
-               return make_response(bookings, 200)
+               return make_response(next((booking for booking in bookings if booking["userid"] == userid), jsonify({"error": "userid not found"})), 200)
 
       # if we not already return the method we return with 409 arror
       return make_response("An existing item already exists", 409)
