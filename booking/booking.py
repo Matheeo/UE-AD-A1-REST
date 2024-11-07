@@ -10,122 +10,158 @@ HOST = '0.0.0.0'
 
 showtime_ws = "http://localhost:3202"
 
+
 # Load the bookings from the json file
 def load_bookings():
-   with open('{}/databases/bookings.json'.format("."), 'r') as jsf:
-      return json.load(jsf)["bookings"]
+    with open('{}/databases/bookings.json'.format("."), 'r') as jsf:
+        return json.load(jsf)["bookings"]
+
 
 # Save the bookings to the json file
 def save_bookings(bookings_list):
-   with open('{}/databases/bookings.json'.format("."), 'w') as jsf:
-      json.dump({"bookings": bookings}, jsf, indent=4)
+    with open('{}/databases/bookings.json'.format("."), 'w') as jsf:
+        json.dump({"bookings": bookings_list}, jsf, indent=4)
 
-# check if the movie is available a the good date in showtime
+    # load the bookings
+    global bookings
+    bookings = load_bookings()
+
+
+
 def movie_available(date, movieid):
+    """Check if the movie is available at the date"""
 
-   # get movies at the date in param
-   response = requests.get(showtime_ws + "/showmovies/" + date)
+    # request the showtime service for the movies of the date
+    response = requests.get(showtime_ws + "/showmovies/" + date)
 
-   # if request is good and movies list exist in
-   if response.status_code == 200 and response.json()["movies"]:
+    # if the response is 200 and the movies are not empty
+    if response.status_code == 200 and response.json()["movies"]:
 
-      # iterate over all the movies
-      for movie in response.json()["movies"]:
+        # iterate over all the movies
+        for movie in response.json()["movies"]:
 
-         # if the movieid is in the movies liest of the date
-         if movie == movieid:
-            return True
+            # if the movie is the same as the one in the request
+            if movie == movieid:
 
-   return False
+                # return True if the movie is available
+                return True
+
+    # return False if the movie is not available
+    return False
 
 # Load the movies
 bookings = load_bookings()
 
+
 @app.route("/", methods=['GET'])
 def home():
-   return "<h1 style='color:blue'>Welcome to the Booking service!</h1>"
+    """Return the home page"""
+    return "<h1 style='color:blue'>Welcome to the Booking service!</h1>"
+
 
 @app.route("/bookings", methods=["GET"])
 def get_json():
-   """Return the json of all the bookings"""
+    """Return the bookings in json format"""
 
-   return make_response(jsonify(bookings), 200)
+    return make_response(jsonify(bookings), 200)
+
 
 @app.route("/bookings/<string:userid>", methods=["GET"])
 def get_booking_for_user(userid):
-   """Return the booking of an user"""
+    """Return the booking for the user with the user id in url"""
 
-   # iterate over the bookings
-   for booking in bookings:
+    # iterate over the bookings
+    for booking in bookings:
 
-      # if the userid is the same as the one in the url
-      if booking["userid"] == userid:
-         return make_response(booking, 200)
+        # if the user id is the same as the one in the request
+        if booking["userid"] == userid:
 
-   return make_response("Bad input parameter", 400)
+            # return the booking
+            return make_response(booking, 200)
+
+    # if the user id is not found return 404
+    return make_response("Bad input parameter", 400)
+
 
 @app.route("/bookings/<string:userid>", methods=["POST"])
 def add_booking_byuser(userid):
-   """Add the booking for the user with the user id in url"""
+    """Add the booking for the user with the user id in url"""
 
-   # check if the userid already exist
-   userid_exist = False
-   for booking in bookings:
-      if booking["userid"] == userid:
-         userid_exist = True
+    data = request.get_json()
+    date = data["date"]
+    movieid = data["movieid"]
 
-   # if the userid does not exit we create it
-   if not userid_exist:
-      bookings.append({"userid": userid, "dates": [{"date": request.get_json()["date"], "movies": [request.get_json()["movieid"]]}]})
-      save_bookings(bookings)
-      return make_response(bookings, 200)
+    # Check if the user already has a booking
+    existing_user_bookings = next((booking for booking in bookings if booking["userid"] == userid), None)
 
-   # if the user id is already in the json
-   else:
-      movie_exist_in_date = False
-      date_exist = False
+    # if the user has no booking yet
+    if not existing_user_bookings:
 
-      # we grab the user booking
-      for user_bookings in bookings:
-         if user_bookings["userid"] == userid:
+        # check if the movie is available
+        if movie_available(date, movieid):
 
-            # we iterate over the user booking
-            for date in user_bookings["dates"]:
+            # create a new booking for the user
+            new_booking = {"userid": userid, "dates": [{"date": date, "movies": [movieid]}]}
 
-               # check if the date matches the one in the request body
-               if date["date"] == request.get_json()["date"]:
-                  date_exist = True
+            # add the booking to the bookings list
+            bookings.append(new_booking)
 
-                  # if it's the same date, we iterate over the movies of the date
-                  for movie in date["movies"]:
+            # save the bookings
+            save_bookings(bookings)
 
-                     # if the movie is on the same date as in the request
-                     if movie == request.get_json()["movieid"]:
-                        movie_exist_in_date = True
+            # return the new booking
+            return make_response(new_booking, 200)
 
-                  # if the movie id is not in the date we add the movieid
-                  if not movie_exist_in_date:
+        # if the movie is not available return 409
+        else:
+            return make_response("Booking not possible", 409)
 
-                     # chech if the movie is available
-                     if movie_available(request.get_json()["date"], request.get_json()["movieid"]):
-                        date["movies"].append(request.get_json()["movieid"])
+    # if the user already has a booking
+    else:
 
-                     save_bookings(bookings)
-                     return make_response(next((booking for booking in bookings if booking["userid"] == userid), jsonify({"error": "userid not found"})), 200)
+        # iterate over the dates of the user
+        for date_entry in existing_user_bookings["dates"]:
 
-            # if the date does not exist
-            if not date_exist:
+            # if the date is the same as the one in the request
+            if date_entry["date"] == date:
 
-               # chech if the movie is available
-               if movie_available(request.get_json()["date"], request.get_json()["movieid"]):
-                  user_bookings["dates"].append({"date": request.get_json()["date"], "movies": [request.get_json()["movieid"]]})
+                # if the movie is already in the booking return 409
+                if movieid in date_entry["movies"]:
+                    return make_response("An existing item already exists", 409)
 
-               save_bookings(bookings)
-               return make_response(next((booking for booking in bookings if booking["userid"] == userid), jsonify({"error": "userid not found"})), 200)
+                # if the movie is available add it to the booking
+                if movie_available(date, movieid):
 
-      # if we not already return the method we return with 409 arror
-      return make_response("An existing item already exists", 409)
+                    # add the movie to the booking
+                    date_entry["movies"].append(movieid)
+
+                    # save the bookings
+                    save_bookings(bookings)
+
+                    # return the booking
+                    return make_response(existing_user_bookings, 200)
+
+                # if the movie is not available return 409
+                else:
+                    return make_response("Booking not possible", 409)
+
+        # if the date is not in the booking and the movie is available
+        if movie_available(date, movieid):
+
+            # add the date and the movie to the booking
+            existing_user_bookings["dates"].append({"date": date, "movies": [movieid]})
+
+            # save the bookings
+            save_bookings(bookings)
+
+            # return the booking
+            return make_response(existing_user_bookings, 200)
+
+        # if the movie is not available return 409
+        else:
+            return make_response("Booking not possible", 409)
+
 
 if __name__ == "__main__":
-   print("Server running in port %s"%(PORT))
-   app.run(host=HOST, port=PORT)
+    print("Server running in port %s" % (PORT))
+    app.run(host=HOST, port=PORT)
