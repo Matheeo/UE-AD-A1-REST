@@ -18,11 +18,22 @@ def save_movies(movies_list):
     with open('{}/databases/movies.json'.format("."), 'w') as jsf:
         json.dump({"movies": movies_list}, jsf, indent=4)
 
+    # Load the movies
+    global movies
+    movies = load_movies()
+
+# Check if the movie exist
 def movie_exist(movieid):
     exist = False
+
+    # Iterate over the movies list
     for movie in movies:
+
+        # if the movie id is found we set exist to True
         if movie["id"] == movieid:
             exist = True
+
+    # return the exist value
     return exist
 
 # Load the movies
@@ -67,26 +78,35 @@ def create_movie(movieid):
     if exist:
         return make_response("An existing item already exists", 409)
 
-    # if the movie does not exist, we will add the movie to the list
+    # if the movie does not exist
     else:
-        movies.append(request.get_json()) # add the movie to the list
-        save_movies(movies) # save the movies to the json file
-        return make_response(request.get_json(), 200)
+
+        # we will add the movie to the movies list
+        movies.append(request.get_json())
+
+        # we save the new movies list
+        save_movies(movies)
+
+        # we return the movie added
+        for movie in movies:
+            if movie["id"] == movieid:
+                return make_response(jsonify(movie), 200)
 
 # delete a movie
 @app.route("/movies/<string:movieid>", methods=["DELETE"])
 def del_movie(movieid):
     """Delete a movies"""
 
-    global movies # use the global movies list
+    # use the global movies variable
+    global movies
 
     # check if the movie already exists
     exist = movie_exist(movieid)
 
-    # save the movies to the json file and return a 200 response if the movie was deleted
+    # if the movies exists
     if exist:
 
-        # if the movie exists, we will delete the movie
+        # we iterate over the movies list and remove the movie with the id of the movieid parameter
         movies = [movie for movie in movies if movie["id"] != movieid]
 
         # we save the new movies list
@@ -101,7 +121,9 @@ def del_movie(movieid):
 def update_movie_rating(movieid, rate):
     """Update movie rate by its id"""
 
+    # """""""""""""""""""""""""""""""""""""""""""""
     # Demander a la prof si on peux renvoyer une autre erreur pour note invalide
+    # """""""""""""""""""""""""""""""""""""""""""""
     if (rate < 0 or rate > 10) or not isinstance(rate, int):
         return make_response("Rate invalid", 400)
 
@@ -112,10 +134,14 @@ def update_movie_rating(movieid, rate):
     if not exist:
         return make_response("ID not found", 400)
 
-    # if the movie exists, we will update the movie rate
+    # iterate over the movies list
     for movie in movies:
+
+        # if the movie id is found
         if movie["id"] == movieid:
-            movie["rate"] = rate
+
+            # we update the movie rate
+            movie["rating"] = rate
 
     # we save the new movies list
     save_movies(movies)
@@ -126,11 +152,13 @@ def update_movie_rating(movieid, rate):
 def get_movie_bytitle():
     """Return one movie by its title"""
 
-    # we will loop through the movies list
+    # iterate over the movies list
     for movie in movies:
 
-        # if the movie title is found, we will return the movie
+        # if the movie title is found
         if movie["title"] == request.args.get("title"):
+
+            # we return the movie
             return make_response(jsonify(movie), 200)
 
     # if the movie id is not found, we will return a 400 error
@@ -143,9 +171,11 @@ def get_movies_byminimalrate():
 
     movies_list = []
 
-    # convert the rate to int, if that raise an Exception
+    # convert the rate to int
     try:
         min_rating = int(request.args.get("min_rating"))
+
+    # if the rate is not an int, we will return a 400 error
     except (TypeError, ValueError):
         return make_response("Rate invalid", 400)
 
@@ -160,6 +190,8 @@ def get_movies_byminimalrate():
                 movies_list.append(movie)
 
         return make_response(jsonify(movies_list), 200)
+
+    # if the rate is invalid, we will return a 400 error
     return make_response("Rate invalid", 400)
 
 # get all the movie by its director
@@ -179,7 +211,13 @@ def get_movies_bydirector():
         if movie["director"] == director:
             movies_list.append(movie)
 
-    return make_response(jsonify(movies_list), 200)
+    # if the movie list is empty, that means the director is not found
+    if len(movies_list) == 0:
+        return make_response("Director not found", 400)
+
+    # else we return the list of movies
+    else:
+        return make_response(jsonify(movies_list), 200)
 
 # get all the api endpoint
 @app.route("/help", methods=["GET"])
