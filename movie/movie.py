@@ -117,14 +117,12 @@ def del_movie(movieid):
     else:
         return make_response("ID not found", 400)
 
-@app.route("/movies/<string:movieid>/<int:rate>", methods=["PUT"])
+@app.route("/movies/<string:movieid>/<float:rate>", methods=["PUT"])
 def update_movie_rating(movieid, rate):
     """Update movie rate by its id"""
 
-    # """""""""""""""""""""""""""""""""""""""""""""
-    # Demander a la prof si on peux renvoyer une autre erreur pour note invalide
-    # """""""""""""""""""""""""""""""""""""""""""""
-    if (rate < 0 or rate > 10) or not isinstance(rate, int):
+    # check if the rate is valid
+    if rate < 0 or rate > 10:
         return make_response("Rate invalid", 400)
 
     # check if the movie already exists
@@ -171,13 +169,8 @@ def get_movies_byminimalrate():
 
     movies_list = []
 
-    # convert the rate to int
-    try:
-        min_rating = int(request.args.get("min_rating"))
-
-    # if the rate is not an int, we will return a 400 error
-    except (TypeError, ValueError):
-        return make_response("Rate invalid", 400)
+    # get the rate param in url
+    min_rating = float(request.args.get("rate"))
 
     # if the rating is valid
     if min_rating >= 0 or min_rating <= 10:
