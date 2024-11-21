@@ -8,7 +8,7 @@ app = Flask(__name__)
 PORT = 3201
 HOST = '0.0.0.0'
 
-showtime_ws = "http://localhost:3202"
+showtime_ws = "http://showtime:3202"
 
 
 # Load the bookings from the json file

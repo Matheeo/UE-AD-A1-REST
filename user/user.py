@@ -9,8 +9,8 @@ app = Flask(__name__)
 PORT = 3203
 HOST = '0.0.0.0'
 
-booking_ws = "http://localhost:3201"
-movie_ws = "http://localhost:3200"
+booking_ws = "http://booking:3201"
+movie_ws = "http://movie:3200"
 
 
 # Load the users from the json file
