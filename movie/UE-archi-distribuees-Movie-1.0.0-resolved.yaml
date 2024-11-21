@@ -103,6 +103,8 @@ paths:
                 $ref: '#/components/schemas/MovieItem'
         "409":
           description: an existing item already exists
+        "400":
+          description: ID not found
     delete:
       tags:
       - admins

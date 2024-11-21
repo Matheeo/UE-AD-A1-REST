@@ -71,6 +71,10 @@ def get_movie_byid(movieid):
 def create_movie(movieid):
     """Add movies"""
 
+    # check if the movie id is the same as the id in the json body
+    if movieid != request.get_json()["id"]:
+        return make_response("ID not found", 400)
+
     # check if the movie already exists
     exist = movie_exist(movieid)
 
